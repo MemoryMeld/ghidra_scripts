@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-#@author ReconDeveloper
+#@author MemoryMeld
 #@category 
 #@keybinding 
 #@menupath 
