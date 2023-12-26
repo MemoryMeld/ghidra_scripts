@@ -16,7 +16,7 @@ ghidra_10.3.3_PUBLIC/./ghidraRun
 
 # Now clone this github 
 
-git clone https://github.com/ReconDeveloper/ghidra_scripts.git
+git clone https://github.com/MemoryMeld/ghidra_scripts.git
 
 # Move all binaries you want analyzed into the binaries folder
 
