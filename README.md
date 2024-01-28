@@ -40,7 +40,7 @@ Run the headless_analyzer script:
 python3 headless_analyzer.py
 ```
 
-To rerun, delete the entire root_results folder
+To rerun, delete the entire `root_results` folder
 ```bash
 rm -rf root_results
 ```
