@@ -1,29 +1,48 @@
-# ghidra_scripts
-Collection of scripts to perform static analysis utilizing Ghidra in headless mode
+# Ghidra Scripts
 
-Author: ReconDeveloper
+Collection of Ghidra scripts for reverse engineering and static analysis on multiple binaries.
 
-# Install notes - Do all steps from your user's home directory 
-# install openjdk-17-jdk, download Ghidra, unzip it and run it
+## Features
 
-sudo apt install openjdk-17-jdk 
+- **Get Decompilation:** Leverages Ghidra’s embedded CppExporter to obtain decompilation for multiple binaries.
+- **Filtered Decompilation:** Get decompilation while excluding external symbols, dead code, and thunk functions.
+- **XREFS:** Catalogs cross-references to C library function calls across multiple binaries.
 
-wget https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3.3_build/ghidra_10.3.3_PUBLIC_20230829.zip
+## Installation
 
-unzip ghidra_10.3.3_PUBLIC_20230829.zip
+1. Install openjdk-17-jdk:
 
-ghidra_10.3.3_PUBLIC/./ghidraRun
+    ```bash
+    sudo apt install openjdk-17-jdk
+    ```
 
-# Now clone this github 
+2. Download Ghidra, unzip it, and run it:
 
-git clone https://github.com/MemoryMeld/ghidra_scripts.git
+    ```bash
+    wget https://github.com/NationalSecurityAgency/ghidra/releases/download/Ghidra_10.3.3_build/ghidra_10.3.3_PUBLIC_20230829.zip
+    unzip ghidra_10.3.3_PUBLIC_20230829.zip
+    ghidra_10.3.3_PUBLIC/./ghidraRun
+    ```
 
-# Move all binaries you want analyzed into the binaries folder
+3. Clone this GitHub repository:
 
-# run the headless_anaylzer script 
+    ```bash
+    git clone https://github.com/MemoryMeld/ghidra_scripts.git
+    ```
 
-python3 headless_analyzer.py 
+4. Move all binaries you want to analyze into the `binaries` folder.
 
-# To rerun, delete entire root_results folder 
+## Usage
 
+Run the headless_analyzer script:
+
+```bash
+python3 headless_analyzer.py
+```
+
+To rerun, delete the entire root_results folder
+```bash
 rm -rf root_results
+```
+## Note: Ensure that you perform all these steps from your user's home directory.
+
