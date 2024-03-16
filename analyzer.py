@@ -31,6 +31,15 @@ class Analyzer:
         self._options = DecompileOptions()
         self._tool = state.getTool()
         self._timeout = timeout
+        # Configuration for disassembled code alignment:
+        self._address_width = 16  # Width of the address field in characters
+        self._byte_sequence_width = 16  # Width of the byte sequence field in characters
+
+        # Format string for displaying disassembled instructions:
+        self._instruction_format = ' {{addr:<{0}}} {{byte:<{1}}} {{inst}}\n'.format(
+            self._address_width, 
+            self._byte_sequence_width
+        )
 
 
     def set_up_decompiler(self):
@@ -40,7 +49,7 @@ class Analyzer:
                 tool_options = options_service.getOptions("Decompiler")
                 self._options.grabFromToolAndProgram(None, tool_options, program)
 
-        # eliminate dead code
+        # Eliminate dead code
         self._options.setEliminateUnreachable(True)
         self._decompiler.setOptions(self._options)
 
@@ -49,6 +58,45 @@ class Analyzer:
         self._decompiler.setSimplificationStyle("decompile")
 
         return self._decompiler
+
+    def unoverflow(self, x):
+        return (abs(x) ^ 0xff) + 1
+
+
+    def to_hex(self, integer):
+        return '{:02x}'.format(integer)
+
+
+    def get_function_signature(self, func):
+        # Get function signature
+        signature = func.getPrototypeString(False, True)
+        return signature + '\n'
+
+
+    def get_instructions(self, func):
+        instructions = ''
+
+        # Get instructions in function
+        func_addr = func.getEntryPoint()
+        insts = ghidra_app.currentProgram.getListing().getInstructions(func_addr, True)
+
+        # Process each instruction
+        for inst in insts:
+            if ghidra_app.getFunctionContaining(inst.getAddress()) != func:
+                break
+
+            instructions += self._instruction_format.format(
+                addr=inst.getAddressString(True, True),
+                byte=' '.join(
+                    [self.to_hex(b) if b >= 0 else self.to_hex(self.unoverflow(b)) for b in inst.getBytes()]),
+                inst=inst
+            )
+
+        return instructions
+
+
+    def disassemble_func(self, func):
+        return self.get_function_signature(func) + self.get_instructions(func)
 
     def get_all_functions(self):
         st = ghidra_app.currentProgram.getSymbolTable()
@@ -62,7 +110,8 @@ class Analyzer:
                 symbol_dict[s.getName()] = s.getAddress()
 
         for address in symbol_dict.values():
-            funcs.append(getFunctionAt(address))
+            func = ghidra_app.currentProgram.getFunctionManager().getFunctionAt(address)
+            funcs.append(func)
         return funcs
            
     
@@ -88,10 +137,21 @@ class Analyzer:
 
         return pseudo_c
 
+    def disassemble(self):
+
+        disasm_result = ''
+
+        # Enumerate all functions and disassemble each function
+        funcs = self.get_all_functions()
+        for func in funcs:
+            disasm_result += self.disassemble_func(func)
+
+        return disasm_result
+
     def list_cross_references(self, dst_func, output_path):
         dst_name = dst_func.getName()
         dst_addr = dst_func.getEntryPoint()
-        references = getReferencesTo(dst_addr) # limited to 4096 records
+        references = getReferencesTo(dst_addr) # Limited to 4096 records
         xref_addresses = []
         f = open(output_path,'a')
         for xref in references:
@@ -115,7 +175,7 @@ class Analyzer:
             
             # No bounds checking, buffer overflows common
             "strcpy", "sprintf", "vsprintf", "strcat", "getpass",
-            "strlen", #needs null terminator!
+            "strlen", # needs null terminator
 
             # Windows specific functions, buffer overflows common
             "makepath", "_makepath", "_splitpath", "snscanf", "_snscanf",
@@ -123,7 +183,7 @@ class Analyzer:
             # Copy functions Windows API and kernel driver functions 
             "RtlCopyMemory", "CopyMemory",
 
-            # When given %s specifier, can cause overflow, if scanf("%10s", buf) still check size of buffer to see if smaller
+            # When given %s specifier, check for size limit on bytes
             "scanf", "fscanf", "sscanf", "__isoc99_scanf", "__isoc99_fscanf", "__isoc99_sscanf",
 
             # Often bounds is based on size of input
@@ -149,7 +209,6 @@ class Analyzer:
             # Check for command injection and shell exploitation (runs with shell on machine)
             "system",  "popen",
 
-            # Check for command injection and 
             # File descriptor handling, might inherit open file descriptors from calling process
             # If sensitive file descriptors are left open or not handled correctly, it can lead to information leak  
             "execl", "execlp", "execle", "execv", "execve", "execvp", "execvpe",
@@ -169,7 +228,8 @@ class Analyzer:
                 symbol_dict[s.getName()] = s.getAddress()
 
         for address in symbol_dict.values():
-            funcs.append(getFunctionAt(address))
+            func = ghidra_app.currentProgram.getFunctionManager().getFunctionAt(address)
+            funcs.append(func)
 
         for f in funcs:
            self.list_cross_references(f, output_path)      
@@ -188,13 +248,23 @@ def run():
     analyzer.get_imported_functions(args[0])
     decompiled_source_file = args[1]
 
+    disassembly_file = args[3]
+
     # Perform selective decompilation process
     pseudo_c = analyzer.decompile()
 
-    # Save to output file
+    # Perform selective dissassembly process
+    disassembled = analyzer.disassemble()
+
+    # Save decompilation to output file
     with open(decompiled_source_file, 'w') as fw:
         fw.write(pseudo_c)
         print('[*] saving decompilation to -> {}'.format(decompiled_source_file))
+
+    # Save disassembly to output file
+    with open(disassembly_file, 'w') as fw:
+        fw.write(disassembled)
+        print('[*] saving disassembly to -> {}'.format(disassembly_file))
     
     exporter = CppExporter()
     options = [Option(CppExporter.CREATE_HEADER_FILE, False)]
