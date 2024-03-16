@@ -6,6 +6,7 @@ Collection of Ghidra scripts for reverse engineering and static analysis on mult
 
 - **Get Decompilation:** Leverages Ghidra’s embedded CppExporter to obtain decompilation for multiple binaries.
 - **Filtered Decompilation:** Get decompilation while excluding external symbols, dead code, and thunk functions.
+- **Filtered Disassembly:** Get disassembly while excluding external symbols.
 - **XREFS:** Catalogs cross-references to C library function calls across multiple binaries.
 
 ## Installation
