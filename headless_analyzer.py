@@ -23,6 +23,7 @@ for fileName in os.listdir(binaries_path):
     result_xrefs = os.path.join(results_directory, f"{fileName}_xrefs.txt")
     cleaned_source = os.path.join(results_directory, f"{fileName}_cleaned_source.c")
     exported_source = os.path.join(results_directory, f"{fileName}_exported_source.c")
+    disas = os.path.join(results_directory, f"{fileName}_disassembly.txt")
 
     # Run Ghidra Headless
     ghidra_project_name = f"{fileName}_ghidra_project"
@@ -38,7 +39,8 @@ for fileName in os.listdir(binaries_path):
         "analyzer.py",
         result_xrefs,
         cleaned_source,
-        exported_source
+        exported_source,
+        disas
     ])
 
 end_time = time.time()
