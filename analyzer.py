@@ -213,7 +213,7 @@ class Analyzer:
             # If sensitive file descriptors are left open or not handled correctly, it can lead to information leak  
             "execl", "execlp", "execle", "execv", "execve", "execvp", "execvpe",
 
-            # Common static memory copy functions in libc
+            # Common memory copy functions in libc
             "memcpy", "memset", "bcopy"]
          
 
